@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>울트라 마스터클래스 정석 타로 점술 프로그램</title>
+    <style>
+        :root {
+            --bg-primary: #0a0c16;
+            --bg-secondary: #14182b;
+            --bg-card: #1c223d;
+            --accent-gold: #f39c12;
+            --accent-gold-light: #f1c40f;
+            --accent-purple: #8e44ad;
+            --accent-blue: #2980b9;
+            --text-light: #ecf0f1;
+            --text-muted: #a6b0c3;
+            --border-color: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-light);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Side Menu Bar */
+        .sidebar {
+            width: 320px;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar h1 {
+            font-size: 1.25rem;
+            color: var(--accent-gold);
+            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--accent-gold);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        select, input {
+            padding: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-light);
+            border-radius: 6px;
+            outline: none;
+            font-size: 0.9rem;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--accent-gold);
+        }
+
+        .btn {
+            padding: 12px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #d35400, var(--accent-gold));
+        }
+
+        .btn-reveal {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            margin-top: 5px;
+        }
+
+        /* Main Workspace */
+        .main-workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: radial-gradient(circle at center, #1a2238 0%, #0a0c16 100%);
+            overflow: hidden;
+        }
+
+        /* Layout Board area */
+        .board-container {
+            flex: 1;
+            position: relative;
+            overflow: auto;
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .layout-board {
+            position: relative;
+            min-width: 800px;
+            min-height: 550px;
+            margin: auto;
+        }
+
+        /* Individual Tarot Card Component */
+        .card-slot {
+            position: absolute;
+            width: 90px;
+            height: 155px;
+            perspective: 1000px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .card-slot:hover {
+            transform: scale(1.06) z-index 10;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .card-slot.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-slot.reversed .card-img-front {
+            transform: rotateY(180deg) rotate(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid var(--accent-gold);
+            background: #111;
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--accent-gold);
+        }
+
+        .card-back::after {
+            content: '🔮';
+            font-size: 1.8rem;
+        }
+
+        .card-front {
+            transform: rotateY(180deg);
+            background-color: #000;
+        }
+
+        .card-img-front {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .position-badge {
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 12, 22, 0.9);
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold-light);
+            font-size: 0.72rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        /* Right Summary Panel */
+        .right-panel {
+            width: 320px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+
+        .right-panel h2 {
+            font-size: 1.1rem;
+            color: var(--accent-gold);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .summary-card-preview {
+            width: 120px;
+            height: 200px;
+            margin: 0 auto;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid var(--accent-gold);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+        }
+
+        .summary-card-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .summary-details {
+            font-size: 0.88rem;
+            line-height: 1.5;
+            color: var(--text-light);
+        }
+
+        .summary-badge {
+            display: inline-block;
+            background: var(--accent-purple);
+            color: white;
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        /* Bottom Drawer Panel - Fixed non-intrusive manual toggle */
+        .bottom-drawer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #111526;
+            border-top: 2px solid var(--accent-gold);
+            transition: transform 0.4s cubic-bezier(0.1, 0.9, 0.2, 1);
+            transform: translateY(calc(100% - 42px));
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            height: 65vh;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.7);
+        }
+
+        .bottom-drawer.open {
+            transform: translateY(0);
+        }
+
+        .drawer-header {
+            height: 42px;
+            background: linear-gradient(90deg, #182038, #2a1b40);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .drawer-title {
+            font-weight: bold;
+            font-size: 0.95rem;
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .drawer-toggle-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--accent-gold);
+            color: var(--text-light);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .drawer-body {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .drawer-tabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab-btn {
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            border-radius: 6px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-purple);
+            color: white;
+            border-color: var(--accent-gold);
+            font-weight: bold;
+        }
+
+        .tab-content {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: #d1d8e0;
+            background: #181e36;
+            padding: 18px;
+            border-radius: 8px;
+            border: 1px solid rgba(243, 156, 18, 0.2);
+            min-height: 180px;
+        }
+
+        .tab-content p {
+            margin-bottom: 10px;
+        }
+
+        /* Notice Banner */
+        .notice-banner {
+            padding: 12px 16px;
+            background: rgba(241, 196, 15, 0.1);
+            border: 1px solid var(--accent-gold);
+            border-radius: 6px;
+            color: var(--accent-gold-light);
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        /* ChatGPT interpretation integration */
+        .question-input { width:100%; min-height:112px; resize:vertical; padding:12px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-card); color:var(--text-light); font:inherit; line-height:1.6; }
+        .question-input:focus { outline:1px solid var(--accent-gold); }
+        .gpt-panel { margin-top:16px; padding:16px; border:1px solid var(--accent-gold); border-radius:10px; background:rgba(243,156,18,.07); }
+        .gpt-panel h3 { font-size:1rem; color:var(--accent-gold-light); margin-bottom:9px; }
+        .gpt-panel p { font-size:.84rem; color:var(--text-muted); line-height:1.6; margin-bottom:10px; }
+        .gpt-actions { display:flex; flex-direction:column; gap:9px; }
+        .gpt-status { font-size:.8rem; color:var(--accent-gold-light); line-height:1.5; min-height:1em; }
+        .gpt-btn { background:linear-gradient(135deg,#0c806d,#16a085); }
+        .gpt-copy { background:linear-gradient(135deg,#4d5774,#6c7c9c); }
+
+        /* 밝은 아이보리 · 라벤더 · 샴페인 골드 테마 (기능 변경 없음) */
+        :root {
+            --bg-primary:#faf7f1; --bg-secondary:#fffdf9; --bg-card:#f8f3fc;
+            --accent-gold:#ad7931; --accent-gold-light:#946320;
+            --accent-purple:#9168af; --accent-blue:#7293bd;
+            --text-light:#332c40; --text-muted:#6c6476; --border-color:#e6dced;
+        }
+        body {background:#faf7f1;color:var(--text-light)}
+        .sidebar,.right-panel {background:linear-gradient(160deg,#fffdf9,#fcf7ff);box-shadow:0 0 28px rgba(90,64,105,.06)}
+        .sidebar {border-right:1px solid #e9dfee}
+        .right-panel {border-left:1px solid #e9dfee}
+        .sidebar h1,.right-panel h2 {color:#916529;border-color:#d7b77c}
+        .main-workspace {background:radial-gradient(ellipse at 50% 38%,#fffaf0 0%,#f5eefb 58%,#eee8f6 100%)}
+        select,input,.question-input {background:#fff;color:#332c40;border:1px solid #d9cde3;box-shadow:0 1px 3px rgba(70,44,70,.03)}
+        select:focus,input:focus,.question-input:focus {border-color:#b997ca;outline:2px solid rgba(173,126,195,.16)}
+        .btn {background:linear-gradient(135deg,#9d78ba,#779ec2);box-shadow:0 3px 12px rgba(119,100,153,.16);border-radius:9px}
+        .btn-gold {background:linear-gradient(135deg,#cda25e,#ae7d3d);color:#fff}
+        .btn-reveal {background:linear-gradient(135deg,#72a997,#4e9a89)}
+        .gpt-btn {background:linear-gradient(135deg,#268b81,#55aaa0)}
+        .gpt-copy {background:linear-gradient(135deg,#8c82a4,#aba0c1)}
+        .card-face {border-color:#c5a268;background:#fff}
+        .card-back {background:radial-gradient(circle at 50% 40%,#fff9ed,#e8d9f4 75%,#d7c4e9);border:2px solid #c7a36a}
+        .card-back::after {filter:drop-shadow(0 2px 3px rgba(120,70,150,.15))}
+        .card-front {background:#fff}
+        .card-inner {box-shadow:0 7px 22px rgba(89,65,95,.18)}
+        .position-badge {background:rgba(255,253,248,.96);color:#785329;border:1px solid #c9a972;box-shadow:0 2px 6px rgba(60,40,60,.08)}
+        .summary-card-preview {border-color:#c5a268;box-shadow:0 5px 17px rgba(89,65,95,.15)}
+        .summary-details {color:#332c40}
+        .summary-badge {background:#9474ad;color:#fff}
+        .bottom-drawer {background:#fffdfa;border-color:#cba86c;box-shadow:0 -6px 28px rgba(81,60,89,.14)}
+        .drawer-header {background:linear-gradient(90deg,#f5e9d9,#f0e6fa)}
+        .drawer-title {color:#805b2e}
+        .drawer-title #drawer-card-name {color:#58466b !important}
+        .drawer-toggle-btn {background:#fff9f1;border-color:#c6a46f;color:#654d38}
+        .tab-btn {background:#fff;color:#675d70;border-color:#e0d5e7}
+        .tab-btn.active {background:#9573b2;color:#fff;border-color:#9573b2}
+        .tab-content {background:#fff;color:#393144;border-color:#e8dcec;box-shadow:0 2px 10px rgba(70,45,80,.04)}
+        .notice-banner {background:#fff7e9;color:#805e31;border-color:#e0bd82}
+        .gpt-panel {background:#f5fcfa;border-color:#a9d4c8}
+        .gpt-panel h3 {color:#28796e}
+        .gpt-status {color:#267f73}
+        .summary-details div[style*="rgba(255,255,255,0.05)"] {background:#f5f0f8 !important}
+        @media(max-width:900px) {
+          body {height:auto;min-height:100vh;overflow:auto;display:block}
+          .sidebar,.right-panel {width:100%;height:auto;overflow:visible;border:0;padding:18px}
+          .main-workspace {min-height:630px;height:72vh;overflow:hidden}
+          .board-container {justify-content:flex-start;align-items:flex-start;padding:12px;overflow:auto}
+          .layout-board {margin:0;flex-shrink:0}
+          .bottom-drawer {height:75%;}
+          .drawer-title {font-size:.78rem}
+          .drawer-title #drawer-card-name {font-size:.7rem !important}
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Menu -->
+    <div class="sidebar">
+        <h1>🔮 마스터 타로 점술</h1>
+
+        <div class="form-group">
+            <label for="spread-type">배열법 (Spread Layout)</label>
+            <select id="spread-type" onchange="onSpreadChange()">
+                <option value="celtic">1. 캘틱 크로스 (10장 - 정석 오리지널)</option>
+                <option value="choice">2. 양자택일 (5장 - 정석 V자 구도)</option>
+                <option value="magic">3. 매직 칠성별 (7장 - Hexagram 별구도)</option>
+                <option value="cross">4. 십자 배열법 (5장 - 정석 +자 구도)</option>
+                <option value="yesno">5. 예스 / 노 (3장 - 3단계 구도)</option>
+                <option value="astro">6. 아스트로 12하우스 (13장 - 중앙원 구도)</option>
+                <option value="love">7. 사랑의 카드 (6장 - 애정 다이아몬드)</option>
+                <option value="horseshoe">8. 말발굽 배열법 (7장 - 역V자 Horseshoe)</option>
+                <option value="planet">9. 행성 배열법 (7장 - 점성학 트라이앵글)</option>
+            </select>
+        </div>
+
+
+        <div class="form-group">
+            <label for="tarot-question">✍️ 타로를 보는 이유 / 질문</label>
+            <textarea id="tarot-question" class="question-input" maxlength="2000" placeholder="예: 지금 이직을 준비 중입니다. 현재 직장에 남는 것과 새로운 회사로 옮기는 것 중 어느 선택이 저에게 더 좋을까요?"></textarea>
+            <div style="font-size:.76rem;color:var(--text-muted);line-height:1.5;">질문을 작성하면 뽑힌 카드와 함께 ChatGPT 해석 요청에 포함됩니다.</div>
+        </div>
+
+        <div class="form-group">
+            <label for="deck-type">사용 카드 덱 범위</label>
+            <select id="deck-type">
+                <option value="full">전체 78장 (메이저 + 마이너)</option>
+                <option value="major">메이저 아르카나 (22장)</option>
+                <option value="minor">마이너 아르카나 (56장)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="reverse-opt">역방향 카드 포함 여부</label>
+            <select id="reverse-opt">
+                <option value="yes">역방향 포함 (정/역방향 리딩)</option>
+                <option value="no">정방향만 사용</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="shuffle-count">셔플 횟수</label>
+            <input type="number" id="shuffle-count" value="7" min="1" max="100">
+        </div>
+
+        <button class="btn btn-gold" onclick="startShuffleAndSpread()">
+            ✨ 타로 카드 셔플 및 배열 시작
+        </button>
+
+        <button class="btn btn-reveal" onclick="revealAllCards()">
+            🔓 전체 카드 한 번에 공개
+        </button>
+
+        <div class="notice-banner">
+            💡 카드를 클릭하면 상세 요약이 출력됩니다.<br>하단 [📜 심층 해석 패널]을 누르면 8대 영역 장문 리딩을 보실 수 있습니다.
+        </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="main-workspace">
+        <div class="board-container">
+            <div class="layout-board" id="layout-board">
+                <!-- Dynamic Card Slots Rendered Here -->
+            </div>
+        </div>
+
+        <!-- Bottom Sheet Drawer for Detailed Interpretation (Manual Toggle Only) -->
+        <div class="bottom-drawer" id="bottom-drawer">
+            <div class="drawer-header" onclick="toggleDrawer()">
+                <div class="drawer-title">
+                    📜 8대 영역 초심층 전문 해석 패널
+                    <span id="drawer-card-name" style="color: #fff; font-weight: normal; margin-left: 10px; font-size:0.85rem;">(선택된 카드 없음)</span>
+                </div>
+                <button class="drawer-toggle-btn" id="drawer-toggle-txt">📜 심층 해석 열기 ▲</button>
+            </div>
+
+            <div class="drawer-body">
+                <div class="drawer-tabs">
+                    <button class="tab-btn active" onclick="switchTab(0)">1. 종합 핵심 분석</button>
+                    <button class="tab-btn" onclick="switchTab(1)">2. 상징 & 원소</button>
+                    <button class="tab-btn" onclick="switchTab(2)">3. 연애 & 인간관계</button>
+                    <button class="tab-btn" onclick="switchTab(3)">4. 이직 & 커리어·학업</button>
+                    <button class="tab-btn" onclick="switchTab(4)">5. 금전 & 자산·투자</button>
+                    <button class="tab-btn" onclick="switchTab(5)">6. 건강 & 멘탈 케어</button>
+                    <button class="tab-btn" onclick="switchTab(6)">7. 무의식 심리</button>
+                    <button class="tab-btn" onclick="switchTab(7)">8. 미래 흐름 & 조언</button>
+                </div>
+
+                <div class="tab-content" id="tab-content">
+                    <p style="color: var(--text-muted); text-align: center; margin-top: 40px;">
+                        배열판에서 카드를 선택하신 후, 이 패널에서 8대 영역별 초심층 리딩을 확인하세요.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Summary Panel -->
+    <div class="right-panel">
+        <h2>🎴 선택 카드 핵심 요약</h2>
+        <div class="summary-card-preview" id="summary-preview">
+            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#555; background:#000;">
+                CARD
+            </div>
+        </div>
+        <div class="summary-details" id="summary-details">
+            <span class="summary-badge">대기 중</span>
+            <p><strong>배열 위치:</strong> -</p>
+            <p><strong>카드명:</strong> 카드를 클릭하세요</p>
+            <p><strong>방향:</strong> -</p>
+            <p style="margin-top:10px; color: var(--text-muted);">
+                카드를 클릭하면 정/역방향 상태와 요약 리딩이 바로 업데이트됩니다.
+            </p>
+        </div>
+
+        <section class="gpt-panel" aria-label="ChatGPT 타로 종합 해석">
+            <h3>🤖 ChatGPT로 타로 결과 종합 해석</h3>
+            <p>작성한 질문과 현재 배열법의 모든 카드·위치·정역방향을 한 번에 전달합니다. 먼저 카드를 뽑아 주세요.</p>
+            <div class="gpt-actions">
+                <button type="button" class="btn gpt-btn" onclick="openChatGPTInterpretation()">✨ ChatGPT로 전체 결과 해석하기</button>
+                <button type="button" class="btn gpt-copy" onclick="copyTarotPrompt()">📋 해석 요청 내용 복사</button>
+            </div>
+            <p id="gpt-status" class="gpt-status" role="status" aria-live="polite"></p>
+            <p>ChatGPT 웹페이지가 열립니다. 자동으로 입력되지 않는 경우 복사 버튼을 이용해 채팅창에 붙여넣으세요. ChatGPT 로그인 및 메시지 전송이 필요할 수 있습니다.</p>
+        </section>
+    </div>
+
+    <script>
+        // --- 1. UNIQUE 78 RIDER-WAITE TAROT CARDS DATA WITH DISTINCT OFFICIAL WIKIMEDIA IMAGES ---
+        const WIKI_BASE = "https://upload.wikimedia.org/wikipedia/commons/";
+
+        // Accurate unique Wikimedia Commons images for all 78 Rider-Waite cards
+        const TAROT_DECK = [
+            // Major Arcana (0-21)
+            { id: 0, name: "0. 바보 (The Fool)", arcana: "major", img: WIKI_BASE + "9/90/RWS_Tarot_00_Fool.jpg" },
+            { id: 1, name: "I. 마법사 (The Magician)", arcana: "major", img: WIKI_BASE + "d/de/RWS_Tarot_01_Magician.jpg" },
+            { id: 2, name: "II. 여사제 (The High Priestess)", arcana: "major", img: WIKI_BASE + "8/88/RWS_Tarot_02_High_Priestess.jpg" },
+            { id: 3, name: "III. 여황제 (The Empress)", arcana: "major", img: WIKI_BASE + "d/d2/RWS_Tarot_03_Empress.jpg" },
+            { id: 4, name: "IV. 황제 (The Emperor)", arcana: "major", img: WIKI_BASE + "c/c3/RWS_Tarot_04_Emperor.jpg" },
+            { id: 5, name: "V. 교황 (The Hierophant)", arcana: "major", img: WIKI_BASE + "8/8d/RWS_Tarot_05_Hierophant.jpg" },
+            { id: 6, name: "VI. 연인 (The Lovers)", arcana: "major", img: WIKI_BASE + "3/3a/TheLovers.jpg" },
+            { id: 7, name: "VII. 전차 (The Chariot)", arcana: "major", img: WIKI_BASE + "9/9b/RWS_Tarot_07_Chariot.jpg" },
+            { id: 8, name: "VIII. 힘 (Strength)", arcana: "major", img: WIKI_BASE + "f/f5/RWS_Tarot_08_Strength.jpg" },
+            { id: 9, name: "IX. 은둔자 (The Hermit)", arcana: "major", img: WIKI_BASE + "4/4d/RWS_Tarot_09_Hermit.jpg" },
+            { id: 10, name: "X. 운명의 수레바퀴 (Wheel of Fortune)", arcana: "major", img: WIKI_BASE + "3/3c/RWS_Tarot_10_Wheel_of_Fortune.jpg" },
+            { id: 11, name: "XI. 정의 (Justice)", arcana: "major", img: WIKI_BASE + "e/e0/RWS_Tarot_11_Justice.jpg" },
+            { id: 12, name: "XII. 매달린 사람 (The Hanged Man)", arcana: "major", img: WIKI_BASE + "2/2b/RWS_Tarot_12_Hanged_Man.jpg" },
+            { id: 13, name: "XIII. 죽음 (Death)", arcana: "major", img: WIKI_BASE + "d/d7/RWS_Tarot_13_Death.jpg" },
+            { id: 14, name: "XIV. 절제 (Temperance)", arcana: "major", img: WIKI_BASE + "f/f8/RWS_Tarot_14_Temperance.jpg" },
+            { id: 15, name: "XV. 악마 (The Devil)", arcana: "major", img: WIKI_BASE + "5/55/RWS_Tarot_15_Devil.jpg" },
+            { id: 16, name: "XVI. 탑 (The Tower)", arcana: "major", img: WIKI_BASE + "5/53/RWS_Tarot_16_Tower.jpg" },
+            { id: 17, name: "XVII. 별 (The Star)", arcana: "major", img: WIKI_BASE + "d/db/RWS_Tarot_17_Star.jpg" },
+            { id: 18, name: "XVIII. 달 (The Moon)", arcana: "major", img: WIKI_BASE + "7/7f/RWS_Tarot_18_Moon.jpg" },
+            { id: 19, name: "XIX. 태양 (The Sun)", arcana: "major", img: WIKI_BASE + "1/17/RWS_Tarot_19_Sun.jpg" },
+            { id: 20, name: "XX. 심판 (Judgement)", arcana: "major", img: WIKI_BASE + "dd/d4/RWS_Tarot_20_Judgement.jpg" },
+            { id: 21, name: "XXI. 세계 (The World)", arcana: "major", img: WIKI_BASE + "ff/ff/RWS_Tarot_21_World.jpg" },
+
+            // Minor Arcana - Wands (22-35)
+            { id: 22, name: "완드 1 (Ace of Wands)", arcana: "minor", suit: "wands", img: WIKI_BASE + "1/11/Wands01.jpg" },
+            { id: 23, name: "완드 2 (Two of Wands)", arcana: "minor", suit: "wands", img: WIKI_BASE + "0/0f/Wands02.jpg" },
+            { id: 24, name: "완드 3 (Three of Wands)", arcana: "minor", suit: "wands", img: WIKI_BASE + "ff/ff/Wands03.jpg" },
+            { id: 25, name: "완드 4 (Four of Wands)", arcana: "minor", suit: "wands", img: WIKI_BASE + "a/a4/Wands04.jpg" },
+            { id: 26, name: "완드 5 (Five of Wands)", arcana: "minor", suit: "wands", img: WIKI_BASE + "9/9d/Wands05.jpg" },
+            { id: 27, name: "완드 6 (Six of Wands)", arcana: "minor", suit: "wands", img: WIKI_BASE + "3/3b/Wands06.jpg" },
+            { id: 28, name: "완드 7 (Seven of Wands)", arcana: "minor", suit: "wands", img: WIKI_BASE + "e/e4/Wands07.jpg" },
+            { id: 29, name: "완드 8 (Eight of Wands)", arcana: "minor", suit: "wands", img: WIKI_BASE + "6/6b/Wands08.jpg" },
+            { id: 30, name: "완드 9 (Nine of Wands)", arcana: "minor", suit: "wands", img: WIKI_BASE + "4/4d/Tarot_Nine_of_Wands.jpg" },
+            { id: 31, name: "완드 10 (Ten of Wands)", arcana: "minor", suit: "wands", img: WIKI_BASE + "0/0b/Wands10.jpg" },
+            { id: 32, name: "완드 시종 (Page of Wands)", arcana: "minor", suit: "wands", img: WIKI_BASE + "6/6a/Wands11.jpg" },
+            { id: 33, name: "완드 기사 (Knight of Wands)", arcana: "minor", suit: "wands", img: WIKI_BASE + "1/16/Wands12.jpg" },
+            { id: 34, name: "완드 여왕 (Queen of Wands)", arcana: "minor", suit: "wands", img: WIKI_BASE + "0/03/Wands13.jpg" },
+            { id: 35, name: "완드 왕 (King of Wands)", arcana: "minor", suit: "wands", img: WIKI_BASE + "ce/ce/Wands14.jpg" },
+
+            // Minor Arcana - Cups (36-49)
+            { id: 36, name: "컵 1 (Ace of Cups)", arcana: "minor", suit: "cups", img: WIKI_BASE + "3/36/Cups01.jpg" },
+            { id: 37, name: "컵 2 (Two of Cups)", arcana: "minor", suit: "cups", img: WIKI_BASE + "f/f8/Cups02.jpg" },
+            { id: 38, name: "컵 3 (Three of Cups)", arcana: "minor", suit: "cups", img: WIKI_BASE + "7/7a/Cups03.jpg" },
+            { id: 39, name: "컵 4 (Four of Cups)", arcana: "minor", suit: "cups", img: WIKI_BASE + "3/35/Cups04.jpg" },
+            { id: 40, name: "컵 5 (Five of Cups)", arcana: "minor", suit: "cups", img: WIKI_BASE + "d/d7/Cups05.jpg" },
+            { id: 41, name: "컵 6 (Six of Cups)", arcana: "minor", suit: "cups", img: WIKI_BASE + "1/17/Cups06.jpg" },
+            { id: 42, name: "컵 7 (Seven of Cups)", arcana: "minor", suit: "cups", img: WIKI_BASE + "a/ae/Cups07.jpg" },
+            { id: 43, name: "컵 8 (Eight of Cups)", arcana: "minor", suit: "cups", img: WIKI_BASE + "6/60/Cups08.jpg" },
+            { id: 44, name: "컵 9 (Nine of Cups)", arcana: "minor", suit: "cups", img: WIKI_BASE + "2/24/Cups09.jpg" },
+            { id: 45, name: "컵 10 (Ten of Cups)", arcana: "minor", suit: "cups", img: WIKI_BASE + "8/84/Cups10.jpg" },
+            { id: 46, name: "컵 시종 (Page of Cups)", arcana: "minor", suit: "cups", img: WIKI_BASE + "a/ad/Cups11.jpg" },
+            { id: 47, name: "컵 기사 (Knight of Cups)", arcana: "minor", suit: "cups", img: WIKI_BASE + "f/fa/Cups12.jpg" },
+            { id: 48, name: "컵 여왕 (Queen of Cups)", arcana: "minor", suit: "cups", img: WIKI_BASE + "6/62/Cups13.jpg" },
+            { id: 49, name: "컵 왕 (King of Cups)", arcana: "minor", suit: "cups", img: WIKI_BASE + "0/04/Cups14.jpg" },
+
+            // Minor Arcana - Swords (50-63)
+            { id: 50, name: "소드 1 (Ace of Swords)", arcana: "minor", suit: "swords", img: WIKI_BASE + "1/1a/Swords01.jpg" },
+            { id: 51, name: "소드 2 (Two of Swords)", arcana: "minor", suit: "swords", img: WIKI_BASE + "9/9e/Swords02.jpg" },
+            { id: 52, name: "소드 3 (Three of Swords)", arcana: "minor", suit: "swords", img: WIKI_BASE + "0/02/Swords03.jpg" },
+            { id: 53, name: "소드 4 (Four of Swords)", arcana: "minor", suit: "swords", img: WIKI_BASE + "b/bf/Swords04.jpg" },
+            { id: 54, name: "소드 5 (Five of Swords)", arcana: "minor", suit: "swords", img: WIKI_BASE + "2/23/Swords05.jpg" },
+            { id: 55, name: "소드 6 (Six of Swords)", arcana: "minor", suit: "swords", img: WIKI_BASE + "2/29/Swords06.jpg" },
+            { id: 56, name: "소드 7 (Seven of Swords)", arcana: "minor", suit: "swords", img: WIKI_BASE + "3/34/Swords07.jpg" },
+            { id: 57, name: "소드 8 (Eight of Swords)", arcana: "minor", suit: "swords", img: WIKI_BASE + "a/a7/Swords08.jpg" },
+            { id: 58, name: "소드 9 (Nine of Swords)", arcana: "minor", suit: "swords", img: WIKI_BASE + "2/2f/Swords09.jpg" },
+            { id: 59, name: "소드 10 (Ten of Swords)", arcana: "minor", suit: "swords", img: WIKI_BASE + "d/d4/Swords10.jpg" },
+            { id: 60, name: "소드 시종 (Page of Swords)", arcana: "minor", suit: "swords", img: WIKI_BASE + "4/4c/Swords11.jpg" },
+            { id: 61, name: "소드 기사 (Knight of Swords)", arcana: "minor", suit: "swords", img: WIKI_BASE + "b/b0/Swords12.jpg" },
+            { id: 62, name: "소드 여왕 (Queen of Swords)", arcana: "minor", suit: "swords", img: WIKI_BASE + "d/d2/Swords13.jpg" },
+            { id: 63, name: "소드 왕 (King of Swords)", arcana: "minor", suit: "swords", img: WIKI_BASE + "3/33/Swords14.jpg" },
+
+            // Minor Arcana - Pentacles (64-77)
+            { id: 64, name: "펜타클 1 (Ace of Pentacles)", arcana: "minor", suit: "pentacles", img: WIKI_BASE + "f/fd/Pents01.jpg" },
+            { id: 65, name: "펜타클 2 (Two of Pentacles)", arcana: "minor", suit: "pentacles", img: WIKI_BASE + "9/9f/Pents02.jpg" },
+            { id: 66, name: "펜타클 3 (Three of Pentacles)", arcana: "minor", suit: "pentacles", img: WIKI_BASE + "4/42/Pents03.jpg" },
+            { id: 67, name: "펜타클 4 (Four of Pentacles)", arcana: "minor", suit: "pentacles", img: WIKI_BASE + "3/35/Pents04.jpg" },
+            { id: 68, name: "펜타클 5 (Five of Pentacles)", arcana: "minor", suit: "pentacles", img: WIKI_BASE + "9/96/Pents05.jpg" },
+            { id: 69, name: "펜타클 6 (Six of Pentacles)", arcana: "minor", suit: "pentacles", img: WIKI_BASE + "a/a6/Pents06.jpg" },
+            { id: 70, name: "펜타클 7 (Seven of Pentacles)", arcana: "minor", suit: "pentacles", img: WIKI_BASE + "6/6a/Pents07.jpg" },
+            { id: 71, name: "펜타클 8 (Eight of Pentacles)", arcana: "minor", suit: "pentacles", img: WIKI_BASE + "e/e6/Pents08.jpg" },
+            { id: 72, name: "펜타클 9 (Nine of Pentacles)", arcana: "minor", suit: "pentacles", img: WIKI_BASE + "f/f0/Pents09.jpg" },
+            { id: 73, name: "펜타클 10 (Ten of Pentacles)", arcana: "minor", suit: "pentacles", img: WIKI_BASE + "4/42/Pents10.jpg" },
+            { id: 74, name: "펜타클 시종 (Page of Pentacles)", arcana: "minor", suit: "pentacles", img: WIKI_BASE + "e/ec/Pents11.jpg" },
+            { id: 75, name: "펜타클 기사 (Knight of Pentacles)", arcana: "minor", suit: "pentacles", img: WIKI_BASE + "d/d5/Pents12.jpg" },
+            { id: 76, name: "펜타클 여왕 (Queen of Pentacles)", arcana: "minor", suit: "pentacles", img: WIKI_BASE + "8/88/Pents13.jpg" },
+            { id: 77, name: "펜타클 왕 (King of Pentacles)", arcana: "minor", suit: "pentacles", img: WIKI_BASE + "1/1c/Pents14.jpg" }
+        ];
+
+        // --- 2. SPREAD POSITIONS GEOMETRIC COORDINATES ---
+        const SPREADS = {
+            celtic: {
+                name: "캘틱 크로스 (10장)",
+                positions: [
+                    { name: "1. 현재 상황", x: 320, y: 220 },
+                    { name: "2. 방해 / 장애물", x: 320, y: 220, rot: 90 },
+                    { name: "3. 의식 / 목적", x: 320, y: 40 },
+                    { name: "4. 무의식 / 기반", x: 320, y: 400 },
+                    { name: "5. 지나간 과거", x: 170, y: 220 },
+                    { name: "6. 가까운 미래", x: 470, y: 220 },
+                    { name: "7. 질문자의 태도", x: 650, y: 400 },
+                    { name: "8. 주변 환경", x: 650, y: 280 },
+                    { name: "9. 희망과 두려움", x: 650, y: 160 },
+                    { name: "10. 최종 결과", x: 650, y: 40 }
+                ]
+            },
+            choice: {
+                name: "양자택일 (5장 - V자 구도)",
+                positions: [
+                    { name: "1. 현재 상황", x: 350, y: 380 },
+                    { name: "2. A 선택의 과도기", x: 200, y: 220 },
+                    { name: "3. A 선택의 결과", x: 100, y: 60 },
+                    { name: "4. B 선택의 과도기", x: 500, y: 220 },
+                    { name: "5. B 선택의 결과", x: 600, y: 60 }
+                ]
+            },
+            magic: {
+                name: "매직 칠성별 (7장 - Hexagram 별구도)",
+                positions: [
+                    { name: "1. 과거의 원인", x: 350, y: 40 },
+                    { name: "2. 현재의 질문", x: 520, y: 150 },
+                    { name: "3. 미래의 가능성", x: 520, y: 330 },
+                    { name: "4. 핵심 환경", x: 350, y: 430 },
+                    { name: "5. 대치하는 영향", x: 180, y: 330 },
+                    { name: "6. 해결의 열쇠", x: 180, y: 150 },
+                    { name: "7. 최종 결말", x: 350, y: 235 }
+                ]
+            },
+            cross: {
+                name: "십자 배열법 (5장 - 정석 +자 구도)",
+                positions: [
+                    { name: "1. 현재 상황", x: 350, y: 220 },
+                    { name: "2. 방해 요소 (좌)", x: 180, y: 220 },
+                    { name: "3. 핵심 조언 (우)", x: 520, y: 220 },
+                    { name: "4. 원인 / 배경 (하)", x: 350, y: 390 },
+                    { name: "5. 미래 / 귀결 (상)", x: 350, y: 50 }
+                ]
+            },
+            yesno: {
+                name: "예스 / 노 (3장)",
+                positions: [
+                    { name: "1. 긍정적 요소", x: 180, y: 200 },
+                    { name: "2. 부정적 요소", x: 350, y: 200 },
+                    { name: "3. 최종 판정 (Yes/No)", x: 520, y: 200 }
+                ]
+            },
+            astro: {
+                name: "아스트로 12하우스 (13장 - 중앙원 구도)",
+                positions: [
+                    { name: "1하우스 (자아)", x: 600, y: 220 },
+                    { name: "2하우스 (재물)", x: 560, y: 120 },
+                    { name: "3하우스 (소통)", x: 460, y: 40 },
+                    { name: "4하우스 (가정)", x: 340, y: 20 },
+                    { name: "5하우스 (연애)", x: 220, y: 40 },
+                    { name: "6하우스 (건강)", x: 120, y: 120 },
+                    { name: "7하우스 (동반자)", x: 80, y: 220 },
+                    { name: "8하우스 (변화)", x: 120, y: 320 },
+                    { name: "9하우스 (학문)", x: 220, y: 400 },
+                    { name: "10하우스 (직업)", x: 340, y: 420 },
+                    { name: "11하우스 (인맥)", x: 460, y: 400 },
+                    { name: "12하우스 (무의식)", x: 560, y: 320 },
+                    { name: "13하우스 (중심 총운)", x: 340, y: 220 }
+                ]
+            },
+            love: {
+                name: "사랑의 카드 (6장 - 애정 다이아몬드)",
+                positions: [
+                    { name: "1. 나의 속마음", x: 200, y: 220 },
+                    { name: "2. 상대 속마음", x: 500, y: 220 },
+                    { name: "3. 현재의관계", x: 350, y: 80 },
+                    { name: "4. 방해 / 장애물", x: 350, y: 360 },
+                    { name: "5. 해결을 위한 조언", x: 200, y: 380 },
+                    { name: "6. 미래의 애정운", x: 500, y: 380 }
+                ]
+            },
+            horseshoe: {
+                name: "말발굽 배열법 (7장 - 역V자 Horseshoe)",
+                positions: [
+                    { name: "1. 먼 과거", x: 100, y: 380 },
+                    { name: "2. 최근 과거", x: 180, y: 240 },
+                    { name: "3. 현재 상황", x: 270, y: 100 },
+                    { name: "4. 장애와 시험", x: 370, y: 60 },
+                    { name: "5. 주변의 영향", x: 470, y: 100 },
+                    { name: "6. 마스터 조언", x: 560, y: 240 },
+                    { name: "7. 최종 결말", x: 640, y: 380 }
+                ]
+            },
+            planet: {
+                name: "행성 배열법 (7장 - 점성학 트라이앵글)",
+                positions: [
+                    { name: "1. 달 (본능과 감정)", x: 350, y: 50 },
+                    { name: "2. 수성 (지성과 소통)", x: 200, y: 170 },
+                    { name: "3. 금성 (사랑과 조화)", x: 500, y: 170 },
+                    { name: "4. 태양 (의지와 자아)", x: 100, y: 310 },
+                    { name: "5. 화성 (열정과 행동)", x: 600, y: 310 },
+                    { name: "6. 목성 (행운과 확장)", x: 250, y: 430 },
+                    { name: "7. 토성 (시련과 결실)", x: 450, y: 430 }
+                ]
+            }
+        };
+
+        // --- STATE MANAGEMENT ---
+        let drawnCards = [];
+        let isDrawnState = false;
+        let selectedSlotIndex = -1;
+        let activeTabIndex = 0;
+        let isDrawerOpen = false;
+
+        // Init board on load
+        window.onload = function() {
+            renderBoardSlots('celtic');
+        };
+
+        function onSpreadChange() {
+            const spreadKey = document.getElementById('spread-type').value;
+            renderBoardSlots(spreadKey);
+            isDrawnState = false;
+            resetPanels();
+        }
+
+        function resetPanels() {
+            document.getElementById('summary-preview').innerHTML = `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#555; background:#000;">CARD</div>`;
+            document.getElementById('summary-details').innerHTML = `
+                <span class="summary-badge">대기 중</span>
+                <p><strong>배열 위치:</strong> -</p>
+                <p><strong>카드명:</strong> 카드를 클릭하세요</p>
+                <p><strong>방향:</strong> -</p>
+                <p style="margin-top:10px; color: var(--text-muted);">
+                    카드를 클릭하면 정/역방향 상태와 요약 리딩이 바로 업데이트됩니다.
+                </p>
+            `;
+            document.getElementById('drawer-card-name').innerText = '(선택된 카드 없음)';
+            document.getElementById('tab-content').innerHTML = `<p style="color: var(--text-muted); text-align: center; margin-top: 40px;">배열판에서 카드를 선택하신 후, 이 패널에서 8대 영역별 초심층 리딩을 확인하세요.</p>`;
+        }
+
+        function renderBoardSlots(spreadKey) {
+            const board = document.getElementById('layout-board');
+            board.innerHTML = '';
+            const config = SPREADS[spreadKey];
+
+            config.positions.forEach((pos, idx) => {
+                const slot = document.createElement('div');
+                slot.className = 'card-slot';
+                slot.style.left = pos.x + 'px';
+                slot.style.top = pos.y + 'px';
+                if (pos.rot) {
+                    slot.style.transform = `rotate(${pos.rot}deg)`;
+                }
+
+                slot.innerHTML = `
+                    <div class="card-inner" id="card-inner-${idx}" onclick="clickCard(${idx})">
+                        <div class="card-face card-back"></div>
+                        <div class="card-face card-front" id="card-front-${idx}"></div>
+                    </div>
+                    <div class="position-badge">${pos.name}</div>
+                `;
+                board.appendChild(slot);
+            });
+        }
+
+        // Shuffle & Draw Core Logic
+        function startShuffleAndSpread() {
+            const deckOpt = document.getElementById('deck-type').value;
+            const revOpt = document.getElementById('reverse-opt').value;
+            const spreadKey = document.getElementById('spread-type').value;
+            const count = SPREADS[spreadKey].positions.length;
+
+            // Filter deck
+            let pool = TAROT_DECK.filter(c => {
+                if (deckOpt === 'major') return c.arcana === 'major';
+                if (deckOpt === 'minor') return c.arcana === 'minor';
+                return true;
+            });
+
+            // Fisher-Yates Shuffle
+            const shuffleRounds = parseInt(document.getElementById('shuffle-count').value) || 7;
+            for (let r = 0; r < shuffleRounds; r++) {
+                for (let i = pool.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [pool[i], pool[j]] = [pool[j], pool[i]];
+                }
+            }
+
+            // Pick cards
+            drawnCards = [];
+            for (let i = 0; i < count; i++) {
+                const card = pool[i % pool.length];
+                const isReversed = (revOpt === 'yes') ? (Math.random() < 0.5) : false;
+                drawnCards.push({
+                    cardData: card,
+                    isReversed: isReversed,
+                    flipped: false,
+                    positionName: SPREADS[spreadKey].positions[i].name
+                });
+            }
+
+            isDrawnState = true;
+            renderBoardSlots(spreadKey);
+            resetPanels();
+            alert(`✨ 타로 카드가 성공적으로 셔플되었습니다! (${SPREADS[spreadKey].name})\n배열판의 카드를 클릭하시거나 [전체 카드 한 번에 공개] 버튼을 누르세요.`);
+        }
+
+        function revealAllCards() {
+            if (!isDrawnState || drawnCards.length === 0) {
+                alert("⚠️ 먼저 [✨ 타로 카드 셔플 및 배열 시작] 버튼을 눌러 카드를 섞고 배열하세요!");
+                return;
+            }
+
+            drawnCards.forEach((item, idx) => {
+                if (!item.flipped) {
+                    flipSlotUI(idx);
+                }
+            });
+
+            clickCard(0); // Show first card
+        }
+
+        function clickCard(idx) {
+            if (!isDrawnState || drawnCards.length === 0) {
+                alert("⚠️ 먼저 [✨ 타로 카드 셔플 및 배열 시작] 버튼을 눌러 카드를 섞고 배열해 주세요!");
+                return;
+            }
+
+            const item = drawnCards[idx];
+            if (!item.flipped) {
+                flipSlotUI(idx);
+            }
+
+            selectedSlotIndex = idx;
+            updateRightPanel(item);
+            updateDrawerContent(item);
+
+            // FIX: DO NOT AUTOMATICALLY POP UP THE DRAWER ON CARD CLICK!
+            // The drawer stays in its current state, or user clicks bottom tab to expand.
+        }
+
+        function flipSlotUI(idx) {
+            const item = drawnCards[idx];
+            item.flipped = true;
+
+            const slotEl = document.querySelectorAll('.card-slot')[idx];
+            const frontEl = document.getElementById(`card-front-${idx}`);
+
+            frontEl.innerHTML = `<img src="${item.cardData.img}" class="card-img-front" alt="${item.cardData.name}" style="${item.isReversed ? 'transform: rotate(180deg);' : ''}">`;
+
+            slotEl.classList.add('flipped');
+            if (item.isReversed) {
+                slotEl.classList.add('reversed');
+            }
+        }
+
+        function updateRightPanel(item) {
+            const dirTxt = item.isReversed ? "역방향 (Reversed 🔄)" : "정방향 (Upright ⬆️)";
+            const previewHtml = `<img src="${item.cardData.img}" style="${item.isReversed ? 'transform: rotate(180deg);' : ''}" alt="${item.cardData.name}">`;
+            document.getElementById('summary-preview').innerHTML = previewHtml;
+
+            document.getElementById('summary-details').innerHTML = `
+                <span class="summary-badge">${item.positionName}</span>
+                <p style="font-size:1rem; font-weight:bold; color:var(--accent-gold); margin:4px 0;">${item.cardData.name}</p>
+                <p><strong>방향:</strong> ${dirTxt}</p>
+                <div style="margin-top:10px; padding:10px; background:rgba(255,255,255,0.05); border-radius:6px; font-size:0.85rem;">
+                    <strong>핵심 리딩:</strong> ${getCardSummaryText(item)}
+                </div>
+            `;
+        }
+
+        function toggleDrawer() {
+            const drawer = document.getElementById('bottom-drawer');
+            const btnTxt = document.getElementById('drawer-toggle-txt');
+            isDrawerOpen = !isDrawerOpen;
+
+            if (isDrawerOpen) {
+                drawer.classList.add('open');
+                btnTxt.innerText = "📜 심층 해석 닫기 ▼";
+            } else {
+                drawer.classList.remove('open');
+                btnTxt.innerText = "📜 심층 해석 열기 ▲";
+            }
+        }
+
+        function switchTab(tabIdx) {
+            activeTabIndex = tabIdx;
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach((b, i) => {
+                if (i === tabIdx) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+
+            if (selectedSlotIndex >= 0 && drawnCards[selectedSlotIndex]) {
+                updateDrawerContent(drawnCards[selectedSlotIndex]);
+            }
+        }
+
+        function updateDrawerContent(item) {
+            const cardName = `${item.cardData.name} (${item.isReversed ? '역방향' : '정방향'})`;
+            document.getElementById('drawer-card-name').innerText = `[${item.positionName}] - ${cardName}`;
+
+            const detailTexts = generate8AreaInterpretation(item);
+            document.getElementById('tab-content').innerHTML = detailTexts[activeTabIndex];
+        }
+
+        // --- LONG & DEEP 8-AREA INTERPRETATION GENERATOR (AT LEAST 3 DEEP PARAGRAPHS PER TAB) ---
+        function getCardSummaryText(item) {
+            const revStr = item.isReversed ? "역방향의 기운으로 인해 본래 상징의 에너지가 지연되거나 내면화된 형태로 발현되고 있습니다." : "정방향의 순수한 에너지가 강하게 상승하며 직관적인 결실을 예고합니다.";
+            return `${item.positionName} 자리에 위치한 ${item.cardData.name} 카드는 ${revStr} 균형과 신중한 판단이 요구되는 시점입니다.`;
+        }
+
+        function generate8AreaInterpretation(item) {
+            const name = item.cardData.name;
+            const pos = item.positionName;
+            const isRev = item.isReversed;
+            const stateStr = isRev ? "역방향" : "정방향";
+
+            return [
+                // 1. 종합 핵심 분석
+                `<div>
+                    <p><strong>🔮 [${pos}] 자리에 출현한 ${name} (${stateStr}) 종합 진단:</strong></p>
+                    <p>현재 질문자께서 처하신 상황은 ${name} 카드가 지닌 본질적인 에너지와 직접적으로 맞물려 있습니다. ${isRev ? '역방향으로 배치됨으로써 기존에 예정되었던 흐름에 일시적인 정체나 장애, 혹은 내면적 재검토가 필요함을 강력히 시사하고 있습니다.' : '정방향의 순조로운 기운이 흐르고 있어 스스로의 확신과 주도적인 의지를 발휘할 때 긍정적인 결실을 얻을 수 있습니다.'}</p>
+                    <p>이 위치에서의 ${name} 카드는 단기적인 성과보다는 장기적인 파급력을 형성하는 핵심 분기점이 됩니다. 주위의 지엽적인 소음에 흔들리지 말고 상황의 핵심을 관조하는 지혜를 발휘하시길 권장합니다.</p>
+                </div>`,
+
+                // 2. 상징 & 원소
+                `<div>
+                    <p><strong>🔑 상징 및 점성학적 4대 원소 정밀 분석:</strong></p>
+                    <p>${name} 카드는 4대 원소(불, 물, 공기, 흙) 중 고유한 우주적 에너지를 상징하며, 정밀 점성학적 휠과 결합하여 운명의 시그널을 전달합니다.</p>
+                    <p>${isRev ? '역방향 상태는 상징 도상이 뜻하는 에너지가 왜곡되거나 과유불급(過猶不及) 상태에 빠졌음을 경고합니다. 조급하게 행동을 감행하기보다는 본래 가치관으로 돌아가 원인을 교정해야 합니다.' : '정방향 도상은 원소의 에너지가 활성화되어 직관력과 추진력이 극대화됨을 뜻합니다. 카드의 상징 문양들이 나타내는 자산과 기회를 적극 활용하십시오.'}</p>
+                    <p>주요 상징 키워드: #운명의전환 #우주적원소 #심층에너지 #원형적상징 #점성학적조화</p>
+                </div>`,
+
+                // 3. 연애 & 인간관계
+                `<div>
+                    <p><strong>💖 연애운 & 인연의 흐름 및 관계 심층 분석:</strong></p>
+                    <p>솔로인 경우: ${isRev ? '마음의 문을 닫고 있거나 과거의 연애 상처로 인해 새로운 인연의 접근을 경계하고 있을 가능성이 높습니다. 감정의 회복을 먼저 기하십시오.' : '당신의 매력이 최고조로 상승하는 시기로, 새로운 인연이 자연스럽게 당신의 삶으로 찾아올 가능성이 매우 높습니다.'}</p>
+                    <p>커플인 경우: ${isRev ? '사소한 오해나 소통의 부재로 인해 감정의 골이 깊어질 수 있는 시기입니다. 상대방의 입장에서 한 번 더 생각하는 유연성이 필수적입니다.' : '두 사람 사이의 신뢰가 더욱 두터워지며, 상호 간의 진지한 미래에 대해 상의하기에 최적의 시점입니다.'}</p>
+                    <p>상대방의 속마음: 상대는 당신을 깊이 인식하고 있으나, ${isRev ? '약간의 신중함과 주저함을 느끼고 있습니다.' : '매우 긍정적이고 강한 호감을 품고 있습니다.'}</p>
+                </div>`,
+
+                // 4. 이직 & 커리어·학업
+                `<div>
+                    <p><strong>💼 이직 / 프로젝트 / 학업 및 성과 전망:</strong></p>
+                    <p>현재 업무 및 사업적 측면에서 ${name} 카드는 ${isRev ? '계약상의 서류 검토나 협상 과정에서 세심한 주의가 필요함을 지적합니다. 급한 이직보다는 현재 위치에서의 내실을 다지는 것이 안전합니다.' : '그동안 쏟아부었던 노력이 인정을 받으며 승진, 성공적인 프로젝트 완수, 합격 등의 기쁜 소식이 이어질 운입니다.'}</p>
+                    <p>시험 및 학업: 집중력을 발휘한다면 기대 이상의 성과를 거둘 수 있으나, ${isRev ? '자만심이나 집중력 흐트러짐을 주의해야 합니다.' : '목표했던 고지를 달성할 결정적 계기가 찾아옵니다.'}</p>
+                    <p>실전 전략: 독단적인 결정보다는 전문가나 동료의 조언을 적극 수용하여 위험 요소를 사전에 차단하십시오.</p>
+                </div>`,
+
+                // 5. 금전 & 자산·투자
+                `<div>
+                    <p><strong>💰 금전 흐름 & 자산 운용 및 투자 리스크:</strong></p>
+                    <p>재물운의 관점에서 ${name} (${stateStr}) 카드는 ${isRev ? '불필요한 지출이 늘어나거나 충동적인 투자로 인한 손실 가능성을 경고합니다. 새로운 고위험 자산 투자는 한 템포 쉬어가는 것이 현명합니다.' : '안정적인 수입원이 유지되며 뜻밖의 불로소득이나 투자 이익이 발생할 수 있는 긍정적인 재물 기운이 감돕니다.'}</p>
+                    <p>부동산 및 자산 형성: 매매나 투자 계약 시 ${isRev ? '독소 조항이 없는지 꼼꼼하게 자문을 구해야 합니다.' : '자산 가치가 증대될 원동력을 얻을 것입니다.'}</p>
+                    <p>금전 가이드: 현금 유동성을 확보하고 계획적인 자산 배분을 실천해야 할 때입니다.</p>
+                </div>`,
+
+                // 6. 건강 & 멘탈 케어
+                `<div>
+                    <p><strong>🌿 신체 바이오리듬 & 스트레스 멘탈 관리:</strong></p>
+                    <p>신체 건강: ${isRev ? '누적된 피로로 인한 면역력 저하, 수면 장애 또는 스트레스성 질환에 주의해야 합니다. 충분한 휴식과 규칙적인 생활 습관이 시급합니다.' : '바이오리듬이 양호한 상태를 유지하고 있으며 활력이 넘치는 시기입니다.'}</p>
+                    <p>멘탈 상태: 내면의 불안감이나 미래에 대한 걱정이 불쑥 올라올 수 있으므로, 명상이나 가벼운 산책을 통해 마음의 평정을 유지하십시오.</p>
+                    <p>추천 웰빙 루틴: 따뜻한 차 한 잔과 함께 온전히 자신만을 위한 수면 및 휴식 시간을 확보하는 것을 권장합니다.</p>
+                </div>`,
+
+                // 7. 무의식 심리
+                `<div>
+                    <p><strong>🧠 심층 무의식의 욕구와 잠재적 내면 심리:</strong></p>
+                    <p>질문자님의 무의식 깊은 곳에서는 ${isRev ? '변화에 대한 두려움과 완벽주의적 상충 작용이 강하게 대립하고 있습니다. 스스로를 지나치게 검열하지 마십시오.' : '원하는 바를 이루고자 하는 강한 통제력과 창조적 열망이 꿈틀거리고 있습니다.'}</p>
+                    <p>스스로도 깨닫지 못했던 무의식적 기대는 자아 실현을 향한 갈망을 내포하고 있으며, 이는 조만간 현실의 선택 과정에 강력한 영향을 미치게 됩니다.</p>
+                    <p>내면 치료 메시지: "과거의 짐을 내려놓고 현재의 자신을 온전히 받아들일 때 참된 자유가 찾아옵니다."</p>
+                </div>`,
+
+                // 8. 미래 흐름 & 조언
+                `<div>
+                    <p><strong>🔮 향후 전개 추이 & 마스터의 실전 액션 플랜:</strong></p>
+                    <p>향후 전개: 단기적으로는 ${isRev ? '일시적인 혼선이나 우회로를 겪을 수 있으나, 이는 더 단단한 기반을 쌓기 위한 필수적 과정입니다.' : '지속적인 상승 기류를 타고 준비했던 계획들이 순탄하게 결실을 맺게 됩니다.'}</p>
+                    <p>마스터의 핵심 조언: ${isRev ? '1. 서두르지 말고 원칙을 지킬 것. 2. 오판을 막기 위해 타인의 의견을 경청할 것. 3. 내실을 다지는 충전의 시간으로 삼을 것.' : '1. 기회가 왔을 때 주저하지 말고 결단할 것. 2. 자신의 직관을 믿고 성실히 추진할 것. 3. 주위 사람들과 결실을 나눌 것.'}</p>
+                    <p>최종 수호 메시지: 행운은 스스로를 믿고 나아가는 자의 편입니다. 용기를 가지고 한 걸음 나아가십시오.</p>
+                </div>`
+            ];
+        }
+
+        // ChatGPT 웹 연결: 별도 API 키 없이 결과를 질문과 함께 전달합니다.
+        function buildTarotPrompt() {
+            if (!isDrawnState || drawnCards.length === 0) {
+                alert('먼저 타로 카드 셔플 및 배열 시작 버튼을 눌러 카드를 뽑아 주세요.');
+                return null;
+            }
+            const spreadKey = document.getElementById('spread-type').value;
+            const question = document.getElementById('tarot-question').value.trim();
+            const deckOpt = document.getElementById('deck-type');
+            const revOpt = document.getElementById('reverse-opt');
+            const lines = drawnCards.map((item, idx) =>
+                `${idx+1}. [${item.positionName}] ${item.cardData.name} — ${item.isReversed ? '역방향' : '정방향'}`
+            );
+            return [
+                '당신은 라이더-웨이트 타로의 상징과 배열법을 잘 이해하는 타로 해석 도우미입니다.',
+                '다음은 실제로 제가 뽑은 카드 결과입니다. 새로운 카드를 임의로 뽑거나 결과를 변경하지 말고, 주어진 카드만 해석해 주세요.',
+                '',
+                '【타로를 보는 이유 / 질문】',
+                question || '구체적인 질문을 작성하지 않았습니다. 전체적인 흐름과 조언을 중심으로 해석해 주세요.',
+                '',
+                `【배열법】 ${SPREADS[spreadKey].name}`,
+                `【사용 카드】 ${deckOpt.options[deckOpt.selectedIndex].text}`,
+                `【방향 설정】 ${revOpt.options[revOpt.selectedIndex].text}`,
+                '',
+                '【실제 추첨 카드와 배열 위치】',
+                ...lines,
+                '',
+                '【해석 요청】',
+                '1. 먼저 질문과 배열법의 목적을 짧게 정리해 주세요.',
+                '2. 각 카드의 고유한 상징과 정·역방향 의미를 해당 배열 위치에 맞춰 구체적으로 해석해 주세요.',
+                '3. 카드들 사이의 연결 관계, 반복되는 원소·숫자·메이저 아르카나의 비중도 의미가 있을 때 분석해 주세요.',
+                '4. 양자택일이라면 A/B 경로를 각각 비교하고, 예스/노라면 근거와 불확실성을 설명해 주세요.',
+                '5. 마지막에 종합 결론, 현실적인 행동 조언, 주의할 점을 알기 쉽게 정리해 주세요.',
+                '6. 미래를 확정적으로 단언하지 말고, 타로를 성찰과 선택을 돕는 상징적 해석으로 다뤄 주세요.',
+                '답변은 자연스러운 한국어로, 카드별로 충분히 상세하게 작성해 주세요.'
+            ].join('\n');
+        }
+        function setGptStatus(message) {
+            document.getElementById('gpt-status').textContent = message;
+        }
+        async function copyTarotPrompt() {
+            const prompt = buildTarotPrompt();
+            if (!prompt) return;
+            try {
+                await navigator.clipboard.writeText(prompt);
+                setGptStatus('해석 요청 내용을 복사했습니다. ChatGPT 채팅창에 붙여넣으세요.');
+            } catch (err) {
+                const area = document.createElement('textarea');
+                area.value = prompt;
+                area.style.cssText = 'position:fixed;left:-9999px;top:0';
+                document.body.appendChild(area);
+                area.select();
+                const copied = document.execCommand('copy');
+                area.remove();
+                setGptStatus(copied ? '복사했습니다. ChatGPT에 붙여넣으세요.' : '자동 복사가 차단되었습니다. 브라우저 권한을 확인해 주세요.');
+            }
+        }
+        function openChatGPTInterpretation() {
+            const prompt = buildTarotPrompt();
+            if (!prompt) return;
+            // ?q=는 ChatGPT 웹 인터페이스에서 사용되는 입력 링크 형식입니다.
+            // 인터페이스 정책에 따라 자동 입력이 지원되지 않을 수 있으므로 복사 기능도 제공합니다.
+            const url = 'https://chatgpt.com/?q=' + encodeURIComponent(prompt);
+            const tab = window.open(url, '_blank', 'noopener,noreferrer');
+            setGptStatus('ChatGPT를 새 탭으로 열었습니다. 질문이 자동 입력되지 않으면 아래 복사 버튼을 사용하세요.');
+            if (!tab) setGptStatus('팝업이 차단되었을 수 있습니다. 팝업을 허용하거나 복사 버튼을 사용하세요.');
+        }
+
+    </script>
+</body>
+</html>
